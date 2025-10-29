@@ -10,7 +10,10 @@ export default function MainContent() {
 
   const handleSummarize = async () => {
     // 1. 更改检查：我们检查 canCreateTextSession
-    if (!window.ai || !(await window.ai.canCreateTextSession())) {
+    // 修复：根据官方文档，明确检查返回值是否为 'no'
+    const availability = window.ai ? await window.ai.canCreateTextSession() : 'no';
+    
+    if (availability === 'no') {
       toast({
         title: 'AI Not Available',
         description: 'Please use a compatible Google Chrome version and enable the AI flags.',
@@ -25,6 +28,7 @@ export default function MainContent() {
     let session = null;
     try {
       // 2. 创建一个会话
+      // 'after-download' 状态也会在这里正确地等待
       session = await window.ai.createTextSession();
       
       // 3. 构造提示词 (Prompt)
