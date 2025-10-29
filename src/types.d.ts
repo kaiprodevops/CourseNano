@@ -1,29 +1,36 @@
-// 声明一个全局 Window 接口来扩展
+// 1. 定义 TextSession 接口
+interface TextSession {
+  /**
+   * Runs the prompt for this session.
+   * @param text The prompt text.
+   * @returns A string containing the response.
+   */
+  prompt(text: string): Promise<string>;
+
+  /**
+   * Destroys the session.
+   */
+  destroy(): Promise<void>;
+}
+
+// 2. 扩展全局 Window 接口
 declare global {
   interface Window {
-    // ai 属性是可选的 ( ? )
     ai?: {
-      // 在这里定义你需要的 API
-      // 这些是基于你请求的示例：
-      
-      summarize: (options: { text: string }) => Promise<{ summary: string }>;
-      
-      prompt: (options: { text: string }) => Promise<{ text: string }>;
-      
-      proofread: (options: { text: string }) => Promise<{ correctedText: string }>;
+      /**
+       * Checks if a text session can be created.
+       * @returns 'readily', 'after-download', or 'no'.
+       */
+      canCreateTextSession(): Promise<'readily' | 'after-download' | 'no'>;
 
-      translate: (options: { text: string, targetLanguage: string }) => Promise<{ translation: string }>;
-
-      write: (options: { prompt: string }) => Promise<{ text: string }>;
-      
-      rewrite: (options: { text: string }) => Promise<{ rewrittenText: string }>;
-      
-      // ... (添加其他 API，例如 multimodal)
+      /**
+       * Creates a new text session.
+       * @returns A Promise that resolves to a new TextSession object.
+       */
+      createTextSession(): Promise<TextSession>;
     };
   }
 }
 
-// 添加一个空的 export {} 
-// 这会将此文件视为一个“模块”而不是“脚本”，
-// 这是正确扩展全局类型的最佳实践。
+// 保持这个空导出，以确保文件被视为一个模块
 export {};

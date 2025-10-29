@@ -1,23 +1,7 @@
 import { Box, Heading, Textarea, Button, Text, useToast } from '@chakra-ui/react';
 import { useAppStore } from '../store';
 import { useState } from 'react';
-
-// --- TypeScript Definition ---
-// The hackathon docs should provide a .d.ts file.
-// If not, you can create a file like `src/types.d.ts`
-// and add this to make TypeScript aware of the new API:
-/*
-declare global {
-  interface Window {
-    ai?: {
-      summarize: (options: { text: string }) => Promise<{ summary: string }>;
-      // ... add other APIs like prompt(), proofread(), etc.
-    };
-  }
-}
-*/
-// -----------------------------
-
+import '../types.d.ts'; // 确保 TypeScript 导入了我们的类型
 
 export default function MainContent() {
   const { isLoading, aiOutput, setLoading, setAiOutput } = useAppStore();
@@ -25,11 +9,11 @@ export default function MainContent() {
   const toast = useToast();
 
   const handleSummarize = async () => {
-    // Check if the client-side API is available
-    if (!window.ai || !window.ai.summarize) {
+    // 1. 更改检查：我们检查 canCreateTextSession
+    if (!window.ai || !(await window.ai.canCreateTextSession())) {
       toast({
         title: 'AI Not Available',
-        description: 'Please use a compatible Google Chrome version.',
+        description: 'Please use a compatible Google Chrome version and enable the AI flags.',
         status: 'error',
         duration: 3000,
         isClosable: true,
@@ -38,14 +22,27 @@ export default function MainContent() {
     }
 
     setLoading(true);
+    let session = null;
     try {
-      // Call the client-side API
-      const result = await window.ai.summarize({ text: inputText });
-      setAiOutput(result.summary);
+      // 2. 创建一个会话
+      session = await window.ai.createTextSession();
+      
+      // 3. 构造提示词 (Prompt)
+      const prompt = `Please summarize the following text: ${inputText}`;
+
+      // 4. 使用会话执行提示词
+      const result = await session.prompt(prompt);
+      
+      setAiOutput(result); // 官方 API 直接返回字符串
+
     } catch (error) {
-      console.error('Error summarizing:', error);
+      console.error('Error handling AI request:', error);
       setAiOutput('An error occurred.');
     } finally {
+      // 5. 销毁会话
+      if (session) {
+        await session.destroy();
+      }
       setLoading(false);
     }
   };
