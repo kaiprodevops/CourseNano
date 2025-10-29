@@ -1,34 +1,57 @@
-// 1. 定义 TextSession 接口
-interface TextSession {
+// 基于你提供的最新官方文档 (LanguageModel / Summarizer)
+
+type LanguageModelAvailability = "available" | "downloading" | "downloadable" | "unavailable";
+
+/**
+ * LanguageModel API (window.LanguageModel)
+ */
+interface LanguageModel {
   /**
-   * Runs the prompt for this session.
-   * @param text The prompt text.
-   * @returns A string containing the response.
+   * 检查 AI 模型是否可用。
    */
-  prompt(text: string): Promise<string>;
+  availability(): Promise<LanguageModelAvailability>;
+}
+
+/**
+ * SummarizerSession 接口
+ */
+interface SummarizerSession {
+  /**
+   * 运行总结。
+   * @param text 要总结的文本。
+   */
+  summarize(text: string): Promise<string>;
 
   /**
-   * Destroys the session.
+   * 销毁会话。
    */
   destroy(): Promise<void>;
 }
 
-// 2. 扩展全局 Window 接口
+/**
+ * Summarizer API (window.Summarizer)
+ */
+interface Summarizer {
+  /**
+   * 创建一个新的总结会话。
+   * 如果模型是 'downloadable'，这将触发下载。
+   */
+  create(): Promise<SummarizerSession>;
+}
+
+// 扩展全局 Window 接口
 declare global {
   interface Window {
-    ai?: {
-      /**
-       * Checks if a text session can be created.
-       * @returns 'readily', 'after-download', or 'no'.
-       */
-      canCreateTextSession(): Promise<'readily' | 'after-download' | 'no'>;
-
-      /**
-       * Creates a new text session.
-       * @returns A Promise that resolves to a new TextSession object.
-       */
-      createTextSession(): Promise<TextSession>;
-    };
+    LanguageModel: LanguageModel;
+    Summarizer: Summarizer;
+    // 你可以稍后在这里添加 Proofreader, Writer 等...
+  }
+  
+  // 添加文档中提到的 userActivation
+  interface Navigator {
+    userActivation: {
+      readonly isActive: boolean;
+    }
   }
 }
 
